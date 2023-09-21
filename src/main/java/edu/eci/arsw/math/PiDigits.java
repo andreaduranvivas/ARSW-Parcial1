@@ -124,7 +124,9 @@ public class PiDigits {
     }
 
     public void waitPiThreads() throws InterruptedException {
-        lock.wait();
+        for (PiThread t : PiThreads){
+            t.wait();
+        }
     }
 
     public void notifyPiThreads() throws InterruptedException {

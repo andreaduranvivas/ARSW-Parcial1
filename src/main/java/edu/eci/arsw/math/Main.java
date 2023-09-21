@@ -6,6 +6,7 @@
 package edu.eci.arsw.math;
 
 import java.util.Arrays;
+import java.util.Scanner;
 
 import static java.lang.Thread.sleep;
 
@@ -21,15 +22,20 @@ public class Main {
             Object lock = new Object();
             PiDigits p = new PiDigits(lock);
             System.out.println(bytesToHex(p.getDigits(0, 100, 3)));
-            //p.waitPiThreads();
-            System.out.println(p.getQuantityDigits());
-            //try{
-              //  sleep(5000);
-            //}catch (IllegalThreadStateException e){
 
-            //}
+            System.out.println("Dígitos procesados: " + p.getQuantityDigits());
+
+            p.waitPiThreads();
+            try{
+                sleep(5000);
+            }catch (IllegalThreadStateException e){
+
+            }
 
             //p.notifyPiThreads();
+            System.out.println("Oprima Enter");
+            Scanner sc = new Scanner(System.in);
+
 
 
         }
