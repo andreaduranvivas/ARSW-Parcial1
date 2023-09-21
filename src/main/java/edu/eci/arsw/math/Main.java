@@ -7,16 +7,36 @@ package edu.eci.arsw.math;
 
 import java.util.Arrays;
 
+import static java.lang.Thread.sleep;
+
 /**
  *
  * @author hcadavid
  */
 public class Main {
 
-    public static void main(String a[]) {
-        System.out.println(bytesToHex(PiDigits.getDigits(0, 10)));
-        System.out.println(bytesToHex(PiDigits.getDigits(1, 100)));
-        System.out.println(bytesToHex(PiDigits.getDigits(1, 1000000)));
+    public static void main(String a[]) throws InterruptedException, IllegalThreadStateException {
+
+        while (true){
+            Object lock = new Object();
+            PiDigits p = new PiDigits(lock);
+            System.out.println(bytesToHex(p.getDigits(0, 100, 3)));
+            //p.waitPiThreads();
+            System.out.println(p.getQuantityDigits());
+            //try{
+              //  sleep(5000);
+            //}catch (IllegalThreadStateException e){
+
+            //}
+
+            //p.notifyPiThreads();
+
+
+        }
+        //PiDigits.divideRanges(0, 10, 5);
+
+        //System.out.println(bytesToHex(PiDigits.getDigits(1, 100)));
+        //System.out.println(bytesToHex(PiDigits.getDigits(1, 1000000)));
     }
 
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
