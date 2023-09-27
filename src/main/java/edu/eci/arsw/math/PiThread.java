@@ -5,58 +5,63 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PiThread extends Thread {
 
-    private static int start;
-    private static int end = 0;
+    private int start;
+    private int count;
 
     private byte[] digits;
+    private static int DigitsPerSum = 8;
+    private static double Epsilon = 1e-17;
 
     public AtomicInteger quantityDigits;
 
     private Object lock;
 
 
-    public PiThread(int start, int end, AtomicInteger quantityDigits, Object lock) {
+    public PiThread(int start, int count) {
         this.start = start;
-        this.end = end;
-        this.quantityDigits = quantityDigits;
-        this.lock = lock;
-
-
+        this.count = count;
     }
 
+
     /**
-     * Returns a range of hexadecimal digits of pi.
+     * 1.
+     * Este es el primer paso del laboratorio. Se crea la clase PiThread, que es una clase hija de la clase Thread.
+     * Esta clase tiene los mismos métodos que la clase anterior de PiDigits. Se copian los métodos de getDigits(),
+     * sum(int m, int n) y hexExponentModulo(int p, int m).
      *
-     * @param DigitsPerSum
-     * @param Epsilon
+     * Para parámetros como DigitsPerSum y Epsilon, se les asigna un valor por defecto como estaba definido en la clase
+     * original de PiDigits y se quedan como atributos de la clase PiThread.
+     *
+     * Returns a range of hexadecimal digits of pi.
      * @return An array containing the hexadecimal digits.
      */
-    public void getMyDigits(int DigitsPerSum, double Epsilon) {
+    public static byte[] getDigits(int start, int count) {
         if (start < 0) {
             throw new RuntimeException("Invalid Interval");
         }
 
-        if (end < 0) {
+        if (count < 0) {
             throw new RuntimeException("Invalid Interval");
         }
 
-        this.digits = new byte[end];
+        byte[] digits = new byte[count];
         double sum = 0;
 
-        for (int i = 0; i < end; i++) {
+        for (int i = 0; i < count; i++) {
             if (i % DigitsPerSum == 0) {
-                sum = 4 * sum(1, start, Epsilon)
-                        - 2 * sum(4, start, Epsilon)
-                        - sum(5, start, Epsilon)
-                        - sum(6, start, Epsilon);
+                sum = 4 * sum(1, start)
+                        - 2 * sum(4, start)
+                        - sum(5, start)
+                        - sum(6, start);
 
                 start += DigitsPerSum;
             }
 
             sum = 16 * (sum - Math.floor(sum));
             digits[i] = (byte) sum;
-            quantityDigits.addAndGet(1);
         }
+
+        return digits;
     }
 
 
@@ -66,7 +71,7 @@ public class PiThread extends Thread {
     /// <param name="m"></param>
     /// <param name="n"></param>
     /// <returns></returns>
-    private static double sum(int m, int n, double Epsilon) {
+    private static double sum(int m, int n) {
         double sum = 0;
         int d = m;
         int power = n;
@@ -118,15 +123,28 @@ public class PiThread extends Thread {
         return result;
     }
 
-    public byte[] getDigits() {
-        return digits;
+    /**
+     * 2.
+     * Este es el segundo paso. Se crea el método run() para que el hilo sepa que debe ejecutar.
+     * En este caso, el hilo debe ejecutar el método getDigits(). Es decir, calculará los dígitos de pi
+     * según la información de start y count suministrada cuando se creó el hilo.
+     * Executes the function.
+     *
+     * @Override
+     * @return None
+     */
+    @Override
+    public void run() {
+        this.digits = this.getDigits(this.start, this.count);
     }
 
-    public static int getStart() {
+    public byte[] getDigitsResult() {return this.digits;}
+
+    public int getStart() {
         return start;
     }
 
-    public static int getEnd() {
-        return end;
+    public int getCount() {
+        return count;
     }
 }

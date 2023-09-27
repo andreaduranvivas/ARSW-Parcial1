@@ -16,31 +16,10 @@ import static java.lang.Thread.sleep;
  */
 public class Main {
 
-    public static void main(String a[]) throws InterruptedException, IllegalThreadStateException {
+    public static void main(String a[]) {
 
-        while (true){
-            Object lock = new Object();
-            PiDigits p = new PiDigits(lock);
-            System.out.println(bytesToHex(p.getDigits(0, 100, 3)));
-
-            System.out.println("Dígitos procesados: " + p.getQuantityDigits());
-
-            p.waitPiThreads();
-            try{
-                sleep(5000);
-            }catch (IllegalThreadStateException e){
-
-            }
-
-            //p.notifyPiThreads();
-            System.out.println("Oprima Enter");
-            Scanner sc = new Scanner(System.in);
-
-
-
-        }
-        //PiDigits.divideRanges(0, 10, 5);
-
+        System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 13)));
+        System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 1)));
         //System.out.println(bytesToHex(PiDigits.getDigits(1, 100)));
         //System.out.println(bytesToHex(PiDigits.getDigits(1, 1000000)));
     }
@@ -57,7 +36,7 @@ public class Main {
         StringBuilder sb=new StringBuilder();
         for (int i=0;i<hexChars.length;i=i+2){
             //sb.append(hexChars[i]);
-            sb.append(hexChars[i+1]);            
+            sb.append(hexChars[i+1]);
         }
         return sb.toString();
     }
