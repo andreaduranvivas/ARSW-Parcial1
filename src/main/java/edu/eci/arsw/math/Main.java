@@ -5,8 +5,12 @@
  */
 package edu.eci.arsw.math;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.sleep;
 
@@ -18,8 +22,11 @@ public class Main {
 
     public static void main(String a[]) {
 
-        System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 13)));
-        System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 1)));
+        System.out.println(bytesToHex(PiDigits.getDigits(0, 100000, 5)));
+        //System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 1)));
+
+
+        //System.out.println(bytesToHex(PiDigits.getDigits(0, 100, 1)));
         //System.out.println(bytesToHex(PiDigits.getDigits(1, 100)));
         //System.out.println(bytesToHex(PiDigits.getDigits(1, 1000000)));
     }

@@ -16,10 +16,21 @@ public class PiThread extends Thread {
 
     private Object lock;
 
-
-    public PiThread(int start, int count) {
+    /**
+     * 6.
+     * Añado dos nuevos atributos para la clase, quantityDigits y lock. El primero para contar concurrentemente la cantidad
+     * de dígitos calculados y el segundo para controlar el bloqueo de los hilos.
+     *
+     * @param start
+     * @param count
+     * @param quantityDigits
+     * @param lock
+     */
+    public PiThread(int start, int count, AtomicInteger quantityDigits, Object lock) {
         this.start = start;
         this.count = count;
+        this.quantityDigits = quantityDigits;
+        this.lock = lock;
     }
 
 
@@ -32,10 +43,14 @@ public class PiThread extends Thread {
      * Para parámetros como DigitsPerSum y Epsilon, se les asigna un valor por defecto como estaba definido en la clase
      * original de PiDigits y se quedan como atributos de la clase PiThread.
      *
+     * 7.
+     * Se modifica quantityDigits para que aumente cada vez que procese un nuevo número. Para ello, lo ponemos dentro de
+     * un bloque sincronizado.
+     *
      * Returns a range of hexadecimal digits of pi.
      * @return An array containing the hexadecimal digits.
      */
-    public static byte[] getDigits(int start, int count) {
+    public byte[] getDigits(int start, int count) {
         if (start < 0) {
             throw new RuntimeException("Invalid Interval");
         }
@@ -59,6 +74,10 @@ public class PiThread extends Thread {
 
             sum = 16 * (sum - Math.floor(sum));
             digits[i] = (byte) sum;
+
+            synchronized (lock){
+                quantityDigits.incrementAndGet();
+            }
         }
 
         return digits;
@@ -130,6 +149,7 @@ public class PiThread extends Thread {
      * según la información de start y count suministrada cuando se creó el hilo.
      * Executes the function.
      *
+     *
      * @Override
      * @return None
      */
@@ -147,4 +167,6 @@ public class PiThread extends Thread {
     public int getCount() {
         return count;
     }
+
+    public Object getLock() {return lock;}
 }

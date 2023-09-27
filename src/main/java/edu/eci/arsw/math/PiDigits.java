@@ -1,5 +1,8 @@
 package edu.eci.arsw.math;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,17 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 ///  *** Translated from C# code: https://github.com/mmoroney/DigitsOfPi ***
 ///  </summary>
 public class PiDigits {
-
-    public static AtomicInteger quantityDigits = new AtomicInteger();
-
-    public Object Mylock;
-
-    public static Object lock;
-
-
-    public PiDigits(Object lock) {
-        this.lock = lock;
-    }
 
     /**
      * 3.
@@ -38,14 +30,19 @@ public class PiDigits {
      * Es decir, los primeros hilos son los que se llevarán el residuo repartido de uno en uno. Cuando se acabe el residuo,
      * los contadores serán del mismo tamaño para cada hilo.
      *
+     * 9.
+     * Se modifica la creación de los hilos para enviarle los dos nuevos parámetros (lock y quantityDigits)
+     *
      * Divides the given range into multiple smaller ranges and creates a PiThread for each range.
      *
-     * @param  start  the starting index of the range
-     * @param  count  the total number of elements in the range
-     * @param  N      the number of threads to create
-     * @return        an array of PiThread objects representing the created threads
+     * @param start          the starting index of the range
+     * @param count          the total number of elements in the range
+     * @param N              the number of threads to create
+     * @param quantityDigits
+     * @param lock
+     * @return an array of PiThread objects representing the created threads
      */
-    public static PiThread[] divideRanges(int start, int count, int N){
+    public static PiThread[] divideRanges(int start, int count, int N, AtomicInteger quantityDigits, Object lock){
         PiThread[] threads = new PiThread[N];
         int residual = count % N;
         int countPerThread = count / N;
@@ -58,7 +55,7 @@ public class PiDigits {
                 countForThisThread += 1;
             }
             //System.out.println(startPerThread + " " + countForThisThread);
-            threads[i] = new PiThread(startPerThread, countForThisThread);
+            threads[i] = new PiThread(startPerThread, countForThisThread, quantityDigits, lock);
             threads[i].start();
             //System.out.println(threads[i].getStart() + " " + threads[i].getCount());
             startPerThread += countForThisThread;
@@ -74,28 +71,35 @@ public class PiDigits {
      * En el cuarto paso, ya se implementa totalmente el método getDigits(). El objetivo es devolver un array de bytes con
      * las respuestas de cada hilo. Para ello, es necesario primero definir el rango de cada hilo, es decir, definir dónde
      * inicia el hilo y cuántos dígitos va a calcular. Por este motivo, se crea un método que divide el rango original en N
-     * (cantidad de hilos) que creamos en el paso anterior. Después, hacemos un ciclo for para recorrer cada hilo y devolver
-     * el array de bytes de cada hilo, para ello, usamos un join, que permite esperar a que cada hilo termine. Luego, se
-     * llama a un método que organiza los resultados de cada hilo en un array de bytes llamado totalDigits. Este arreglo
+     * (cantidad de hilos) que creamos en el paso anterior. Después, hacemos otro método que crea un ciclo for para recorrer
+     * cada hilo y devolver el array de bytes de cada hilo, para ello, usamos un join, que permite esperar a que cada hilo termine.
+     * Luego, se llama a un método que organiza los resultados de cada hilo en un array de bytes llamado totalDigits. Este arreglo
      * se retornará.
      *
+     * 8.
+     * Se modifica el método para crear tanto el número atómico que servirá como contador de los dígitos calculados como el
+     * lock que será usado para controlar el bloqueo de los hilos. Estas dos variables se enviarán como parámetros al método
+     * divideRanges() que es el que crea los hilos.
+     *
      * Returns a range of hexadecimal digits of pi.
+     *
      * @param start The starting location of the range.
      * @param count The number of digits to return
-     * @param N The number of threads
+     * @param N     The number of threads
      * @return An array containing the hexadecimal digits.
      */
-    public static byte[] getDigits(int start, int count, int N){
-        PiThread[] threads = divideRanges(start, count, N);
-
-        for (PiThread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    public static byte[] getDigits(int start, int count, int N) {
+        AtomicInteger quantityDigits = new AtomicInteger(0);
+        Object lock = new Object();
+        PiThread[] threads = divideRanges(start, count, N, quantityDigits, lock);
+        //joinDigits(threads);
+        try {
+            waitForEnter(count, quantityDigits, lock);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
         byte[] totalDigits = organizeResults(threads, count);
 
         return totalDigits;
@@ -130,12 +134,63 @@ public class PiDigits {
         }
 
         return totalDigits;
+
+    }
+
+    /**
+     * Joins the given array of PiThread objects.
+     *
+     * @param  threads  an array of PiThread objects to join
+     */
+    private static void joinDigits(PiThread[] threads) {
+        for (PiThread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 10.
+     *
+     * Se crea un nuevo método que esperará a que se presione ENTER para continuar cada 5 segundos. Cada vez que se
+     * detenga, indicará el número de dígitos calculados, guardados en la variable quantityDigits. Para ello, se crea un
+     * bloque sincronizado con el objeto lock, para no tener condiciones de carrera para la variable quantityDigits.
+     * Además, se verifica si la cantidad de dígitos calculados es igual al total de dígitos que se esperan. Si es así,
+     * se detendrá la operación.
+     *
+     * Wait to read an ENTER key press from the user every 5 seconds until the calculation of the digits is finished
+     *
+     * @param  count            the number of digits to calculate
+     * @param  quantityDigits   the current quantity of digits calculated
+     * @param  lock             the lock object for synchronization
+     * @throws InterruptedException if the thread is interrupted while sleeping
+     * @throws IOException          if an I/O error occurs while reading input
+     */
+    private static void waitForEnter(int count, AtomicInteger quantityDigits, Object lock) throws InterruptedException, IOException {
+
+        synchronized (lock) {
+            while (quantityDigits.get() < count) {
+                //Thread.sleep(5000);
+
+                lock.wait(5000);
+
+                System.out.println("Digits found: " + quantityDigits.get());
+                System.out.println("Press ENTER to resume...");
+
+                // Wait for Enter to be pressed
+                new BufferedReader(new InputStreamReader(System.in)).readLine();
+
+                // Notify all threads that they can continue
+                lock.notifyAll();
+            }
+        }
     }
 
 
-    public static AtomicInteger getQuantityDigits() {
-        return quantityDigits;
-    }
+
 
 
 }
